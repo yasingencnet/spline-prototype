@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spline Scroll Demo</title>
+    <style>
+      html { scroll-behavior: smooth; }
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #000; overflow-x: hidden; color: #fff; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
+
+      .section {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        height: 100svh;
+        overflow: hidden;
+      }
+
+      .hero-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .hero-bg-overlay{
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        background: rgba(0, 0, 0, 0.8);
+      }
+
+      .hero-bg canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .section > *:not(.hero-bg) {
+        position: relative;
+        z-index: 1;
+      }
+
+      h1{
+        font-size: 6rem;
+        line-height: 0.8;
+        margin: 1rem 0;
+        max-width: 22ch;
+      }
+      h2{
+        font-size: 2rem;
+        line-height: 0.8;
+        margin: 1rem 0;
+        max-width: 18ch;
+      }
+      p{
+        font-size: 1.4rem;
+        line-height: 1.6;
+        margin: 1rem 0;
+        max-width: 58ch;
+      }
+
+      a{
+        color: #fff;
+        text-transform: uppercase;
+        font-size: 1rem;
+        font-weight: bold;
+        margin: 1rem;
+        padding: 1rem 2rem;
+        background: rgba(0, 255, 187, 0.5);
+        border-radius: 1rem;
+        text-decoration: none;
+      }
+
+      .spline-wrap {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        height: 100svh;
+        z-index: 0;
+      }
+      .spline-wrap canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .spline-wrap-fixed {
+        width: 100%;
+        height: 100svh;
+        z-index: 0;
+      }
+      .spline-wrap-fixed canvas {
+        display: block;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .scroll-spacer { height: 200svh; }
+
+      .section-header{
+        padding: 2rem;
+      }
+
+      ul{
+        margin-left: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="section">
+        <div class="hero-bg" id="heroBg">
+          <div class="hero-bg-overlay"></div>
+          <canvas id="heroCanvas"></canvas>
+        </div>
+        <h1>Spline Scroll Trigger Scrub Demo</h1>
+        <p>The original Spline animation is playing in the background on page load.</p>
+        <a href="#scrollTriggerExample">Scroll Down</a>
+    </div>
+
+    <header class="section-header" id="scrollTriggerExample">
+      <h2>ScrollTrigger</h2>
+      <p>Pinned · Scrub · Transparent canvas</p>
+    </header>
+    <div class="scroll-spacer" id="scrollSpacer">
+      <div class="spline-wrap" id="splineWrap">
+        <canvas id="canvas3d"></canvas>
+      </div>
+    </div>
+
+    
+
+    <header class="section-header" id="rotateExample">
+      <h2>ScrollTrigger + Rotation</h2>
+      <p>Pinned · Scrub · 90° camera orbit · Transparent canvas</p>
+    </header>
+    <div class="scroll-spacer" id="scrollSpacer2">
+      <div class="spline-wrap" id="splineWrap2">
+        <canvas id="canvas3d2"></canvas>
+      </div>
+    </div>
+
+
+    <header class="section-header" id="noStickyExample">
+      <h2>ScrollTrigger (No Pinning)</h2>
+      <p>No pinning · Scrub · Transparent canvas</p>
+    </header>
+    <div class="scroll-spacer" id="scrollSpacer3">
+      <div class="spline-wrap-fixed" id="splineWrap3">
+        <canvas id="canvas3d3"></canvas>
+      </div>
+    </div>
+
+    <div class="section"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+
+    <script type="module">
+      import { Application } from './runtime.js';
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      // ── Hero background: auto-plays on load (like original) ──
+      const heroCanvas = document.getElementById('heroCanvas');
+      const heroApp = new Application(heroCanvas, { wasmPath: '/' });
+      heroApp.load('./scene.splinecode').then(() => {
+        const gl = heroCanvas.getContext('webgl2');
+        const origClearColor = gl.clearColor.bind(gl);
+        gl.clearColor = function(r, g, b, a) {
+          origClearColor(0, 0, 0, 0);
+        };
+        gl.clearColor(0, 0, 0, 0);
+      });
+
+      // ── Scroll-driven instance ──
+      const canvas = document.getElementById('canvas3d');
+      const app = new Application(canvas, { wasmPath: '/' });
+
+      const ANIM = {
+        oring:   { startX: 43.72,  endX: 89.85  },
+        gasket:  { startX: 41.44,  endX: 13.24  },
+        cathode: { startX: 109.69, endX: 54.77  },
+        anode:   { startX: 39.01,  endX: -58.28 },
+      };
+
+      // Helper: patch clear color + pause + restart render + return meshes
+      function initScrollInstance(splineApp, cvs) {
+        splineApp._eventManager.pause();
+        const gl = cvs.getContext('webgl2');
+        const orig = gl.clearColor.bind(gl);
+        gl.clearColor = (r, g, b, a) => orig(0, 0, 0, 0);
+        gl.clearColor(0, 0, 0, 0);
+        splineApp._renderer.setAnimationLoop(splineApp.render.bind(splineApp));
+        const meshes = {};
+        splineApp.getAllObjects().forEach(obj => {
+          if (obj.type === 'Mesh') meshes[obj.name] = obj;
+        });
+        return meshes;
+      }
+
+      // ── Instance 1: scroll-driven X position ──
+      app.load('./scene.splinecode').then(() => {
+        const meshes = initScrollInstance(app, canvas);
+
+        for (const [name, d] of Object.entries(ANIM)) {
+          if (meshes[name]) meshes[name].position.x = d.startX;
+        }
+
+        const proxy = { t: 0 };
+
+        gsap.to(proxy, {
+          t: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '#scrollSpacer',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: true,
+            markers: true
+          },
+          onUpdate() {
+            for (const [name, d] of Object.entries(ANIM)) {
+              if (meshes[name]) {
+                meshes[name].position.x = gsap.utils.interpolate(d.startX, d.endX, proxy.t);
+              }
+            }
+          },
+        });
+      });
+
+      // ── Instance 3: scroll-driven X position (no sticky) ──
+      const canvas3 = document.getElementById('canvas3d3');
+      const app3 = new Application(canvas3, { wasmPath: '/' });
+
+      app3.load('./scene.splinecode').then(() => {
+        const meshes3 = initScrollInstance(app3, canvas3);
+
+        for (const [name, d] of Object.entries(ANIM)) {
+          if (meshes3[name]) meshes3[name].position.x = d.startX;
+        }
+
+        const proxy3 = { t: 0 };
+
+        gsap.to(proxy3, {
+          t: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '#scrollSpacer3',
+            start: 'top 50%',
+            end: 'bottom center',
+            scrub: true,
+            markers: true
+          },
+          onUpdate() {
+            for (const [name, d] of Object.entries(ANIM)) {
+              if (meshes3[name]) {
+                meshes3[name].position.x = gsap.utils.interpolate(d.startX, d.endX, proxy3.t);
+              }
+            }
+          },
+        });
+      });
+
+      // ── Instance 2: scroll-driven X position + 360° camera orbit ──
+      const canvas2 = document.getElementById('canvas3d2');
+      const app2 = new Application(canvas2, { wasmPath: '/' });
+
+      app2.load('./scene.splinecode').then(() => {
+        // Patch clear color but DON'T pause event manager yet — orbit controls need initialization
+        const gl2 = canvas2.getContext('webgl2');
+        const orig2 = gl2.clearColor.bind(gl2);
+        gl2.clearColor = (r, g, b, a) => orig2(0, 0, 0, 0);
+        gl2.clearColor(0, 0, 0, 0);
+
+        const em2 = app2._eventManager;
+        em2.pause();
+        app2._renderer.setAnimationLoop(app2.render.bind(app2));
+
+        const meshes2 = {};
+        app2.getAllObjects().forEach(obj => {
+          if (obj.type === 'Mesh') meshes2[obj.name] = obj;
+        });
+
+        for (const [name, d] of Object.entries(ANIM)) {
+          if (meshes2[name]) meshes2[name].position.x = d.startX;
+        }
+
+        // Camera orbit: manual spherical coordinate approach
+        const cam = app2._camera;
+
+        // Compute pivot = average mesh position
+        const names = Object.keys(ANIM).filter(n => meshes2[n]);
+        const pivotX = names.reduce((s, n) => s + ANIM[n].startX, 0) / names.length;
+        const pivotY = names.reduce((s, n) => s + meshes2[n].position.y, 0) / names.length;
+        const pivotZ = names.reduce((s, n) => s + meshes2[n].position.z, 0) / names.length;
+
+        // Initial camera offset from pivot
+        const cx0 = cam.position.x - pivotX;
+        const cy0 = cam.position.y - pivotY;
+        const cz0 = cam.position.z - pivotZ;
+        // Radius in XZ plane
+        const radius = Math.sqrt(cx0 * cx0 + cz0 * cz0);
+        const startAngle = Math.atan2(cx0, cz0);
+
+        const proxy2 = { t: 0 };
+
+        gsap.to(proxy2, {
+          t: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '#scrollSpacer2',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: true,
+            markers: true
+          },
+          onUpdate() {
+            // Separate parts on X
+            for (const [name, d] of Object.entries(ANIM)) {
+              if (meshes2[name]) {
+                meshes2[name].position.x = gsap.utils.interpolate(d.startX, d.endX, proxy2.t);
+              }
+            }
+
+            // Orbit camera around pivot in XZ plane
+            const angle = startAngle + proxy2.t * (Math.PI / 2);
+            cam.position.x = pivotX + radius * Math.sin(angle);
+            cam.position.z = pivotZ + radius * Math.cos(angle);
+            // Y stays the same
+            cam.lookAt(pivotX, pivotY, pivotZ);
+          },
+        });
+      });
+    </script>
+  </body>
+</html>
