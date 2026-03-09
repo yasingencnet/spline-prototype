@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrub - Spline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <h1>ScrollTrigger</h1>
+        <p>Pinned · Scrub · Transparent canvas</p>
+      </div>
+      <div>
+        <a class="link" href="/">Original</a>
+        <a class="link" href="/scrub">Scrub</a>
+        <a class="link" href="/no-scrub">No Scrub</a>
+        <a class="link" href="/rotate">Rotate</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="scroll-spacer" id="scrollSpacer">
+          <div class="spline-wrap" id="splineWrap">
+            <canvas id="canvas3d"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+
+    <script type="module">
+      import { Application } from './runtime.js';
+
+      gsap.registerPlugin(ScrollTrigger);
+
+      const canvas = document.getElementById('canvas3d');
+      const app = new Application(canvas, { wasmPath: '/' });
+
+      const ANIM = {
+        oring:   { startX: 43.72,  endX: 89.85  },
+        gasket:  { startX: 41.44,  endX: 13.24  },
+        cathode: { startX: 109.69, endX: 54.77  },
+        anode:   { startX: 39.01,  endX: -58.28 },
+      };
+
+      app.load('./scene.splinecode').then(() => {
+        app._eventManager.pause();
+        const gl = canvas.getContext('webgl2');
+        const orig = gl.clearColor.bind(gl);
+        gl.clearColor = (r, g, b, a) => orig(0, 0, 0, 0);
+        gl.clearColor(0, 0, 0, 0);
+        app._renderer.setAnimationLoop(app.render.bind(app));
+
+        const meshes = {};
+        app.getAllObjects().forEach(obj => {
+          if (obj.type === 'Mesh') meshes[obj.name] = obj;
+        });
+
+        for (const [name, d] of Object.entries(ANIM)) {
+          if (meshes[name]) meshes[name].position.x = d.startX;
+        }
+
+        const proxy = { t: 0 };
+
+        gsap.to(proxy, {
+          t: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '#scrollSpacer',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: true,
+          },
+          onUpdate() {
+            for (const [name, d] of Object.entries(ANIM)) {
+              if (meshes[name]) {
+                meshes[name].position.x = gsap.utils.interpolate(d.startX, d.endX, proxy.t);
+              }
+            }
+          },
+        });
+      });
+    </script>
+  </body>
+</html>
