@@ -1,19 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Original - Spline</title>
+    <title>V2</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+      body {
+        margin: 0;
+				overflow: hidden;
+      }
+      html, body {
+        height: 100%;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header class="header">
       <div>
-        <h1>Original Spline</h1>
-        <p>No scroll control. Auto plays on load.</p>
+        <h1>V2 Spline</h1>
+        <p>New version.</p>
       </div>
       <div>
         <a class="link" href="/">Original</a>
@@ -25,21 +37,13 @@
       </div>
     </header>
 
-    <main>
-      <section class="section">
-          <canvas id="original"></canvas>
-      </section>
-    </main>
-
+    <canvas id="canvas3d"></canvas>
     <script src="script.js"></script>
-
     <script type="module">
-      import { Application } from './runtime.js';
-
-      // ── Original: auto-plays on load (no scroll control) ──
-      const originalCanvas = document.getElementById('original');
-      const originalApp = new Application(originalCanvas, { wasmPath: '/' });
-      originalApp.load('./scene.splinecode');
+      import { Application } from '/v2/runtime.js';
+      const canvas = document.getElementById('canvas3d');
+      const app = new Application(canvas, {wasmPath: '/v2/' });
+      app.load('/v2/scene.splinecode');
     </script>
   </body>
 </html>

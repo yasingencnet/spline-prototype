@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V1 vs V2 Scene Comparison</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #e3e3e3;
+      font-family: "IBM Plex Mono", monospace;
+      padding: 2rem 3rem;
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+    h1 {
+      font-size: 1.6rem;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.05em;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      margin: 2.5rem 0 0.75rem;
+      letter-spacing: 0.08em;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #222;
+    }
+    h2.green { color: #66ff00; }
+    h2.white { color: #e3e3e3; }
+
+    /* Summary cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .summary-card {
+      background: #111;
+      padding: 1rem 1.25rem;
+      border: 1px solid #1e1e1e;
+      border-radius: 6px;
+    }
+    .summary-card h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+      color: #555;
+    }
+    .summary-card .val {
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+    .summary-card .sub {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 400;
+    }
+    .tag-new { background: #0a2e0a; color: #66ff00; }
+    .tag-removed { background: #2e0a0a; color: #ff4444; }
+    .tag-shared { background: #1a1a1a; color: #666; }
+    .tag-changed { background: #2e1f0a; color: #ffaa00; }
+
+    /* Change summary badges */
+    .change-badges {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.9rem;
+    }
+    .badge {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-new { background: #66ff00; }
+    .dot-removed { background: #ff4444; }
+    .dot-shared { background: #444; }
+
+    /* Tables */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 0.6rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      background: #0f0f0f;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      color: #555;
+      font-weight: 400;
+      position: sticky;
+      top: 0;
+    }
+    tr:hover td { background: #111; }
+    td.num { font-variant-numeric: tabular-nums; }
+
+    /* Status colors */
+    .c-new { color: #66ff00; }
+    .c-removed { color: #ff4444; }
+    .c-changed { color: #ffaa00; }
+    .c-same { color: #444; }
+
+    /* Mapping section */
+    .mapping-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.5rem 1rem;
+      align-items: center;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .mapping-arrow { color: #555; }
+    .mapping-v1 { text-align: right; color: #ff4444; }
+    .mapping-v2 { color: #66ff00; }
+
+    /* Side-by-side tables */
+    .side-by-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    #status {
+      padding: 0.75rem 1rem;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 6px;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+    #status.done { border-color: #1a3a1a; color: #66ff00; }
+
+    canvas { display: none !important; }
+    .view-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .view-links a {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: #fff;
+      color: #000;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      transition: opacity 0.15s ease;
+    }
+    .view-links a:hover { opacity: 0.8; }
+
+    .header{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>V1 vs V2 Scene Comparison</h1>
+    <div class="view-links">
+      <a href="/" target="_blank">View Original</a>
+      <a href="/v2" target="_blank">View V2</a>
+    </div>
+  </div>
+
+  <p class="subtitle" id="timestamp"></p>
+  <div id="status">Loading scenes...</div>
+  <div id="report"></div> 
+
+  <canvas id="c1"></canvas>
+  <canvas id="c2"></canvas>
+
+  <script type="module">
+    import { Application } from '/v2/runtime.js';
+
+    const status = document.getElementById('status');
+    const report = document.getElementById('report');
+    document.getElementById('timestamp').textContent = 'Generated ' + new Date().toLocaleString();
+
+    function fmt(n) { return typeof n === 'number' ? n.toFixed(2) : n; }
+    function fmtBytes(b) {
+      if (b >= 1048576) return (b / 1048576).toFixed(2) + ' MB';
+      if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
+      return b + ' B';
+    }
+    function pctChange(a, b) {
+      if (a === '?' || b === '?') return '';
+      const pct = ((b - a) / a * 100).toFixed(0);
+      if (pct > 0) return `<span class="c-new">+${pct}%</span>`;
+      if (pct < 0) return `<span class="c-removed">${pct}%</span>`;
+      return '<span class="c-same">0%</span>';
+    }
+
+    async function getFileSize(url) {
+      try {
+        const r = await fetch(url);
+        const blob = await r.blob();
+        return blob.size || '?';
+      } catch { return '?'; }
+    }
+
+    function extractObjects(app) {
+      const meshes = [];
+      const lights = [];
+      const cameras = [];
+      const others = [];
+      app.getAllObjects().forEach(obj => {
+        const entry = {
+          name: obj.name,
+          type: obj.type,
+          x: obj.position?.x,
+          y: obj.position?.y,
+          z: obj.position?.z,
+          scaleX: obj.scale?.x,
+          scaleY: obj.scale?.y,
+          scaleZ: obj.scale?.z,
+          visible: obj.visible,
+        };
+        if (obj.type === 'Mesh') meshes.push(entry);
+        else if (obj.type?.includes('Light')) lights.push(entry);
+        else if (obj.type?.includes('Camera')) cameras.push(entry);
+        else others.push(entry);
+      });
+      return { meshes, lights, cameras, others };
+    }
+
+    function groupByName(arr) {
+      const map = {};
+      arr.forEach(m => { (map[m.name] = map[m.name] || []).push(m); });
+      return map;
+    }
+
+    async function run() {
+      status.textContent = 'Loading v1 scene...';
+      const c1 = document.getElementById('c1');
+      const app1 = new Application(c1, { wasmPath: '/' });
+      await app1.load('./scene.splinecode');
+
+      status.textContent = 'Loading v2 scene...';
+      const c2 = document.getElementById('c2');
+      const app2 = new Application(c2, { wasmPath: '/v2/' });
+      await app2.load('/v2/scene.splinecode');
+
+      status.textContent = 'Analyzing...';
+
+      const v1 = extractObjects(app1);
+      const v2 = extractObjects(app2);
+
+      const [v1SceneSize, v2SceneSize, v1RuntimeSize, v2RuntimeSize] = await Promise.all([
+        getFileSize('./scene.splinecode'),
+        getFileSize('/v2/scene.splinecode'),
+        getFileSize('./runtime.js'),
+        getFileSize('/v2/runtime.js'),
+      ]);
+
+      const v1MeshNames = new Set(v1.meshes.map(m => m.name));
+      const v2MeshNames = new Set(v2.meshes.map(m => m.name));
+      const added = [...v2MeshNames].filter(n => !v1MeshNames.has(n));
+      const removed = [...v1MeshNames].filter(n => !v2MeshNames.has(n));
+      const shared = [...v1MeshNames].filter(n => v2MeshNames.has(n));
+
+      let html = '';
+
+      // ── File sizes ──
+      html += '<h2 class="white">File Sizes</h2>';
+      html += '<div class="summary-grid">';
+      html += `<div class="summary-card"><h3>V1 Scene</h3><div class="val">${fmtBytes(v1SceneSize)}</div></div>`;
+      html += `<div class="summary-card"><h3>V2 Scene</h3><div class="val">${fmtBytes(v2SceneSize)}</div><div class="sub">${pctChange(v1SceneSize, v2SceneSize)}</div></div>`;
+      html += `<div class="summary-card"><h3>V1 Runtime</h3><div class="val">${fmtBytes(v1RuntimeSize)}</div></div>`;
+      html += `<div class="summary-card"><h3>V2 Runtime</h3><div class="val">${fmtBytes(v2RuntimeSize)}</div><div class="sub">${pctChange(v1RuntimeSize, v2RuntimeSize)}</div></div>`;
+      html += '</div>';
+
+      // ── Object counts ──
+      html += '<h2 class="white">Object Counts</h2>';
+      html += '<table>';
+      html += '<tr><th>Category</th><th>V1</th><th>V2</th><th>Change</th></tr>';
+      const cats = [
+        ['Meshes', v1.meshes.length, v2.meshes.length],
+        ['Unique Mesh Names', v1MeshNames.size, v2MeshNames.size],
+        ['Lights', v1.lights.length, v2.lights.length],
+        ['Cameras', v1.cameras.length, v2.cameras.length],
+        ['Other Objects', v1.others.length, v2.others.length],
+        ['Total', v1.meshes.length + v1.lights.length + v1.cameras.length + v1.others.length,
+                  v2.meshes.length + v2.lights.length + v2.cameras.length + v2.others.length],
+      ];
+      for (const [label, c1, c2] of cats) {
+        const d = c2 - c1;
+        const cls = d > 0 ? 'c-new' : d < 0 ? 'c-removed' : 'c-same';
+        html += `<tr><td>${label}</td><td class="num">${c1}</td><td class="num">${c2}</td><td class="num ${cls}">${d > 0 ? '+' : ''}${d}</td></tr>`;
+      }
+      html += '</table>';
+
+      // ── Mesh changes summary ──
+      html += '<h2 class="green">Mesh Changes</h2>';
+      html += '<div class="change-badges">';
+      html += `<div class="badge"><span class="dot dot-new"></span> ${added.length} added</div>`;
+      html += `<div class="badge"><span class="dot dot-removed"></span> ${removed.length} removed</div>`;
+      html += `<div class="badge"><span class="dot dot-shared"></span> ${shared.length} shared</div>`;
+      html += '</div>';
+
+      // Name mapping (removed → added likely mapping)
+      if (removed.length && added.length) {
+        html += '<h2 class="white">Likely Name Mapping</h2>';
+        html += '<p style="font-size:0.75rem; color:#555; margin-bottom:1rem;">Best-guess mapping between removed v1 names and new v2 names</p>';
+        html += '<div class="mapping-grid">';
+        html += '<div style="text-align:right;color:#555;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;">V1 (removed)</div><div></div><div style="color:#555;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;">V2 (added)</div>';
+        // Simple mapping: show removed and added side by side
+        const maxLen = Math.max(removed.length, added.length);
+        for (let i = 0; i < maxLen; i++) {
+          const r = removed[i] || '';
+          const a = added[i] || '';
+          html += `<div class="mapping-v1">${r}</div><div class="mapping-arrow">${r && a ? '→' : ''}</div><div class="mapping-v2">${a}</div>`;
+        }
+        html += '</div>';
+      }
+
+      // ── Side-by-side mesh tables ──
+      html += '<h2 class="white">Mesh Detail</h2>';
+      html += '<div class="side-by-side">';
+
+      // V1
+      html += '<div>';
+      html += '<h2 class="white" style="margin-top:0;border:0;">V1 Meshes</h2>';
+      html += '<table><tr><th>Name</th><th>X</th><th>Y</th><th>Z</th><th>#</th><th>Status</th></tr>';
+      const v1Grouped = groupByName(v1.meshes);
+      for (const [name, arr] of Object.entries(v1Grouped).sort()) {
+        const m = arr[0];
+        const isShared = v2MeshNames.has(name);
+        const tagCls = isShared ? 'tag-shared' : 'tag-removed';
+        const tagLabel = isShared ? 'shared' : 'removed';
+        html += `<tr>`;
+        html += `<td><strong>${name}</strong></td>`;
+        html += `<td class="num">${fmt(m.x)}</td>`;
+        html += `<td class="num">${fmt(m.y)}</td>`;
+        html += `<td class="num">${fmt(m.z)}</td>`;
+        html += `<td class="num">${arr.length}</td>`;
+        html += `<td><span class="tag ${tagCls}">${tagLabel}</span></td>`;
+        html += `</tr>`;
+      }
+      html += '</table></div>';
+
+      // V2
+      html += '<div>';
+      html += '<h2 class="white" style="margin-top:0;border:0;">V2 Meshes</h2>';
+      html += '<table><tr><th>Name</th><th>X</th><th>Y</th><th>Z</th><th>#</th><th>Status</th></tr>';
+      const v2Grouped = groupByName(v2.meshes);
+      for (const [name, arr] of Object.entries(v2Grouped).sort()) {
+        const m = arr[0];
+        const isShared = v1MeshNames.has(name);
+        const tagCls = isShared ? 'tag-shared' : 'tag-new';
+        const tagLabel = isShared ? 'shared' : 'new';
+        html += `<tr>`;
+        html += `<td><strong>${name}</strong></td>`;
+        html += `<td class="num">${fmt(m.x)}</td>`;
+        html += `<td class="num">${fmt(m.y)}</td>`;
+        html += `<td class="num">${fmt(m.z)}</td>`;
+        html += `<td class="num">${arr.length}</td>`;
+        html += `<td><span class="tag ${tagCls}">${tagLabel}</span></td>`;
+        html += `</tr>`;
+      }
+      html += '</table></div>';
+      html += '</div>'; // end side-by-side
+
+      // ── Shared mesh position comparison ──
+      if (shared.length) {
+        html += '<h2 class="white">Shared Mesh Position Comparison</h2>';
+        html += '<table>';
+        html += '<tr><th>Name</th><th>V1 X</th><th>V2 X</th><th>ΔX</th><th>V1 Y</th><th>V2 Y</th><th>ΔY</th><th>V1 Instances</th><th>V2 Instances</th></tr>';
+        for (const name of shared.sort()) {
+          const m1 = groupByName(v1.meshes)[name][0];
+          const m2 = groupByName(v2.meshes)[name][0];
+          const dx = m2.x - m1.x;
+          const dy = m2.y - m1.y;
+          const dxCls = Math.abs(dx) > 0.01 ? 'c-changed' : 'c-same';
+          const dyCls = Math.abs(dy) > 0.01 ? 'c-changed' : 'c-same';
+          const cnt1 = groupByName(v1.meshes)[name].length;
+          const cnt2 = groupByName(v2.meshes)[name].length;
+          const cntCls = cnt1 !== cnt2 ? 'c-changed' : 'c-same';
+          html += `<tr>`;
+          html += `<td><strong>${name}</strong></td>`;
+          html += `<td class="num">${fmt(m1.x)}</td><td class="num">${fmt(m2.x)}</td><td class="num ${dxCls}">${fmt(dx)}</td>`;
+          html += `<td class="num">${fmt(m1.y)}</td><td class="num">${fmt(m2.y)}</td><td class="num ${dyCls}">${fmt(dy)}</td>`;
+          html += `<td class="num">${cnt1}</td><td class="num ${cntCls}">${cnt2}</td>`;
+          html += `</tr>`;
+        }
+        html += '</table>';
+      }
+
+      // ── Lights comparison ──
+      if (v1.lights.length || v2.lights.length) {
+        html += '<h2 class="white">Lights</h2>';
+        html += '<div class="side-by-side">';
+        html += '<div><h2 class="white" style="margin-top:0;border:0;">V1</h2>';
+        html += '<table><tr><th>Name</th><th>Type</th></tr>';
+        v1.lights.forEach(l => { html += `<tr><td>${l.name}</td><td>${l.type}</td></tr>`; });
+        if (!v1.lights.length) html += '<tr><td colspan="2" class="c-same">None</td></tr>';
+        html += '</table></div>';
+        html += '<div><h2 class="white" style="margin-top:0;border:0;">V2</h2>';
+        html += '<table><tr><th>Name</th><th>Type</th></tr>';
+        v2.lights.forEach(l => { html += `<tr><td>${l.name}</td><td>${l.type}</td></tr>`; });
+        if (!v2.lights.length) html += '<tr><td colspan="2" class="c-same">None</td></tr>';
+        html += '</table></div></div>';
+      }
+
+      // ── Cameras comparison ──
+      if (v1.cameras.length || v2.cameras.length) {
+        html += '<h2 class="white">Cameras</h2>';
+        html += '<div class="side-by-side">';
+        html += '<div><h2 class="white" style="margin-top:0;border:0;">V1</h2>';
+        html += '<table><tr><th>Name</th><th>Type</th><th>X</th><th>Y</th><th>Z</th></tr>';
+        v1.cameras.forEach(c => { html += `<tr><td>${c.name}</td><td>${c.type}</td><td class="num">${fmt(c.x)}</td><td class="num">${fmt(c.y)}</td><td class="num">${fmt(c.z)}</td></tr>`; });
+        if (!v1.cameras.length) html += '<tr><td colspan="5" class="c-same">None</td></tr>';
+        html += '</table></div>';
+        html += '<div><h2 class="white" style="margin-top:0;border:0;">V2</h2>';
+        html += '<table><tr><th>Name</th><th>Type</th><th>X</th><th>Y</th><th>Z</th></tr>';
+        v2.cameras.forEach(c => { html += `<tr><td>${c.name}</td><td>${c.type}</td><td class="num">${fmt(c.x)}</td><td class="num">${fmt(c.y)}</td><td class="num">${fmt(c.z)}</td></tr>`; });
+        if (!v2.cameras.length) html += '<tr><td colspan="5" class="c-same">None</td></tr>';
+        html += '</table></div></div>';
+      }
+
+      // ── Object type breakdown ──
+      html += '<h2 class="white">Object Type Breakdown</h2>';
+      const v1Types = {}; [...v1.meshes, ...v1.lights, ...v1.cameras, ...v1.others].forEach(o => { v1Types[o.type] = (v1Types[o.type] || 0) + 1; });
+      const v2Types = {}; [...v2.meshes, ...v2.lights, ...v2.cameras, ...v2.others].forEach(o => { v2Types[o.type] = (v2Types[o.type] || 0) + 1; });
+      const allTypes = new Set([...Object.keys(v1Types), ...Object.keys(v2Types)]);
+      html += '<table><tr><th>Type</th><th>V1</th><th>V2</th><th>Change</th></tr>';
+      for (const t of [...allTypes].sort()) {
+        const a = v1Types[t] || 0;
+        const b = v2Types[t] || 0;
+        const d = b - a;
+        const cls = d > 0 ? 'c-new' : d < 0 ? 'c-removed' : 'c-same';
+        html += `<tr><td>${t}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num ${cls}">${d > 0 ? '+' : ''}${d}</td></tr>`;
+      }
+      html += '</table>';
+
+      report.innerHTML = html;
+      status.textContent = 'Analysis complete';
+      status.classList.add('done');
+    }
+
+    run().catch(err => { status.textContent = 'Error: ' + err.message; console.error(err); });
+  </script>
+</body>
+</html>

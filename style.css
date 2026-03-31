@@ -30,7 +30,7 @@
           text-transform: uppercase;
           font-size: 0.8rem;
           font-weight: 400;
-          padding: 1rem;
+          padding: .5rem 1rem;
           text-decoration: none;
           letter-spacing: 0.025em;
           transition: color .1s ease;
@@ -43,6 +43,17 @@
           &.is-active{
             text-decoration: underline;
             text-underline-offset: 5px;
+          }
+
+          sup{
+            background: -webkit-linear-gradient(#00f2ff, #66ff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+
+          &.link-button{
+            color: #000;
+            background-color: #fff;
           }
         }
         h1{
